@@ -1,3 +1,4 @@
+const nodeExternals = require('webpack-node-externals');
 const TerserPlugin = require("terser-webpack-plugin");
 module.exports = {
   output: {
@@ -6,6 +7,7 @@ module.exports = {
     libraryTarget:'umd',
     umdNamedDefine: true 
   },
+  externals: [nodeExternals()],
   optimization: {
     minimize: true,
     minimizer: [

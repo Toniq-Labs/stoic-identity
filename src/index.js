@@ -2,6 +2,7 @@ import { Principal } from "@dfinity/principal";
 import { blobFromUint8Array } from '@dfinity/candid';
 import { requestIdOf } from '@dfinity/agent';
 import { Cbor } from "@dfinity/agent";
+import { SignIdentity } from '@dfinity/agent';
 import { DelegationChain } from '@dfinity/identity';
 var Buffer = require('buffer/').Buffer;
 window.Buffer = Buffer;
@@ -22,11 +23,12 @@ class PublicKey {
     return this._der;
   };
 };
-export class StoicIdentity {
+export class StoicIdentity extends SignIdentity {
   _principal;
   _publicKey;
   
   constructor(principal, pubkey) {
+    super();
     this._principal = principal;
     this._publicKey = pubkey;
   };
@@ -49,16 +51,13 @@ export class StoicIdentity {
       if (host) _stoicOrigin = host;
       var result = _stoicInit();
       if (result === false) {
-        StoicIdentity.connect().then(resolve).catch(reject);
+        reject(false);
       } else {
         resolve(new StoicIdentity(Principal.fromText(result.principal), new PublicKey(hex2buf(result.key), result.type)));
       };
     });
   };
   
-  getPrincipal() {
-    return this._principal;
-  };
   getPublicKey() {
     return this._publicKey;
   };
@@ -246,6 +245,3 @@ window.addEventListener("message", function(e){
   }
   return;
 }, false);
-
-
-console.log("MOD");

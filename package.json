@@ -1,16 +1,16 @@
 {
   "name": "ic-stoic-identity",
-  "version": "1.0.2",
+  "version": "1.0.7",
   "description": "",
   "main": "dist/ic-stoic-identity.js",
-  "module": "src/identity.js",
+  "module": "src/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "webpack --mode development",
     "build": "webpack --mode production"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
     "@dfinity/agent": "^0.9.1",
     "@dfinity/identity": "^0.9.1",
@@ -20,6 +20,7 @@
   "devDependencies": {
     "terser-webpack-plugin": "^5.1.4",
     "webpack": "^5.45.1",
-    "webpack-cli": "^4.7.2"
+    "webpack-cli": "^4.7.2",
+    "webpack-node-externals": "^3.0.0"
   }
 }
