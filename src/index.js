@@ -5,7 +5,6 @@ import { Cbor } from "@dfinity/agent";
 import { DelegationChain } from '@dfinity/identity';
 var Buffer = require('buffer/').Buffer;
 window.Buffer = Buffer;
-
 const domainSeparator = Buffer.from(new TextEncoder().encode('\x0Aic-request'));
 var _stoicOrigin = 'https://www.stoicwallet.com';
 //Identity
@@ -23,7 +22,7 @@ class PublicKey {
     return this._der;
   };
 };
-class StoicIdentity {
+export class StoicIdentity {
   _principal;
   _publicKey;
   
@@ -248,6 +247,5 @@ window.addEventListener("message", function(e){
   return;
 }, false);
 
-//EXPORT
-window.StoicIdentity = StoicIdentity;
-export default StoicIdentity;
+
+console.log("MOD");

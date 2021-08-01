@@ -1,7 +1,10 @@
 const TerserPlugin = require("terser-webpack-plugin");
 module.exports = {
   output: {
-    filename: 'identity-stoic.js'
+    filename: 'ic-stoic-identity.js',
+    library: 'ic-stoic-identity',
+    libraryTarget:'umd',
+    umdNamedDefine: true 
   },
   optimization: {
     minimize: true,
