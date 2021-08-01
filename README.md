@@ -39,3 +39,13 @@ StoicIdentity.load().then(async identity => {
   StoicIdentity.disconnect();
 })
 ```
+
+### Authorization in StoicWallet:
+
+![image](https://user-images.githubusercontent.com/13844325/127787841-1d7cda5d-f1a7-4cbb-b251-c28dbf4e9068.png)
+
+### Manage Applications in StoicWallet:
+
+![image](https://user-images.githubusercontent.com/13844325/127787891-4c052b21-7844-410f-bb03-ff0caa148f6e.png)
+
+
