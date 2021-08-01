@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+
+   </head>
+   <body>
+      <script type="module">
+        //Load any IDLs here....
+         import whoamiIDL from './whoami.did.js';
+         window.whoamiIDL = whoamiIDL;
+      </script>
+      <script src="https://bundle.run/buffer@6.0.3"></script>
+      <script>window.Buffer = buffer.Buffer;</script>
+      <script src="./ext.browser.js"></script>
+      <script src="./identity-stoic.js"></script>
+      <script src="./script.js"></script>
+   </body>
+</html>
