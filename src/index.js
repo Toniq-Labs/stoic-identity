@@ -51,7 +51,7 @@ export class StoicIdentity extends SignIdentity {
       if (host) _stoicOrigin = host;
       var result = _stoicInit();
       if (result === false) {
-        reject(false);
+        resolve(false);
       } else {
         resolve(new StoicIdentity(Principal.fromText(result.principal), new PublicKey(hex2buf(result.key), result.type)));
       };
