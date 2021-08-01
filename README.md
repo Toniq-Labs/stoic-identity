@@ -11,23 +11,31 @@ npm i ic-stoic-identity --save-dev
 ```
 
 ### In the browser:
-```
+```javascript
 import {StoicIdentity} from "ic-stoic-identity";
 ```
 Usage:
-```
-StoicIdentity.load().then(async id => {
-  if (id !== false) {
+```javascript
+StoicIdentity.load().then(async identity => {
+  if (identity !== false) {
     //ID is a already connected wallet!
   } else {
     //No existing connection, lets make one!
-    id = await StoicIdentity.connect();
+    identity = await StoicIdentity.connect();
   }
   
   //Lets display the connected principal!
-  console.log(id.getPrincipal().toText());
+  console.log(identity.getPrincipal().toText());
   
-  //Disconnect
+  //Create an actor canister
+  const actor = Actor.createActor(idlFactory, {
+    agent: new HttpAgent({
+      identity,
+    }),
+    canisterId,
+  });
+  
+  //Disconnect after
   StoicIdentity.disconnect();
 })
 ```
