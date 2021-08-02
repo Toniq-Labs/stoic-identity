@@ -5,6 +5,8 @@ Stoic Identity is an ICP Identity that works directly with the @dfinity/agent fo
 
 In future, we will add **canister scopes** to authorization requests, so applications must define which canister ID's they will use with their application.
 
+![screen-capture (5)](https://user-images.githubusercontent.com/13844325/127801017-c173c688-1871-4b65-b5cb-40ab4db28fbd.gif)
+
 ## Installation
 ```
 npm i ic-stoic-identity --save-dev
@@ -39,6 +41,7 @@ StoicIdentity.load().then(async identity => {
   StoicIdentity.disconnect();
 })
 ```
+![screen-capture (5)](https://user-images.githubusercontent.com/13844325/127801010-ecca13bb-a329-40dd-94cd-a072649a6ed0.gif)
 
 ### Authorization in StoicWallet:
 
