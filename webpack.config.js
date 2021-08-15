@@ -5,7 +5,8 @@ module.exports = {
     filename: 'ic-stoic-identity.js',
     library: 'ic-stoic-identity',
     libraryTarget:'umd',
-    umdNamedDefine: true 
+    umdNamedDefine: true ,
+    globalObject: 'this'
   },
   externals: [nodeExternals()],
   optimization: {

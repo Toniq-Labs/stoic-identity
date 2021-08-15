@@ -10,8 +10,6 @@ const domainSeparator = Buffer.from(new TextEncoder().encode('\x0Aic-request'));
 var _stoicOrigin = 'https://www.stoicwallet.com';
 //Identity
 class PublicKey {
-  _der;
-  _type;
   constructor(der, type){
     this._der = der;
     this._type = type;
@@ -24,9 +22,6 @@ class PublicKey {
   };
 };
 export class StoicIdentity extends SignIdentity {
-  _principal;
-  _publicKey;
-  
   constructor(principal, pubkey) {
     super();
     this._principal = principal;
@@ -67,6 +62,9 @@ export class StoicIdentity extends SignIdentity {
   };
   _transport(data) {
     return _stoicSign("sign", data, this.getPrincipal().toText());
+  };
+  accounts() {
+    return _stoicSign("accounts", "accounts", this.getPrincipal().toText());
   };
   transformRequest(request) {
     return new Promise(async (resolve, reject) => {
@@ -187,20 +185,20 @@ function _removeFrame(id) {
 };
 function _postToFrame(data, resolve, reject) {
     var thisIndex = _listenerIndex;
+    _listenerIndex += 1;
     _listener[thisIndex] = [resolve, reject];
     var ii = document.createElement('iframe');
-    ii.setAttribute('id', 'connect_iframe');
+    ii.setAttribute('id', 'connect_iframe'+thisIndex);
     ii.setAttribute('width', '0');
     ii.setAttribute('height', '0');
     ii.setAttribute('border', '0');
     document.body.appendChild(ii);
-    _frames[thisIndex] = document.getElementById('connect_iframe');
+    _frames[thisIndex] = document.getElementById('connect_iframe'+thisIndex);
     _frames[thisIndex].addEventListener("load", function() {
       data.listener = thisIndex;
       _frames[thisIndex].contentWindow.postMessage(data, "*");      
     });
     ii.setAttribute('src', _stoicOrigin+'/?stoicTunnel');
-    _listenerIndex += 1;
 };
 function buf2hex(buffer) {
   return [...new Uint8Array(buffer)]
