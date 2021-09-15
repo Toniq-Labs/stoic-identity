@@ -4,7 +4,7 @@ import { requestIdOf } from '@dfinity/agent';
 import { Cbor } from "@dfinity/agent";
 import { SignIdentity } from '@dfinity/agent';
 import { DelegationChain } from '@dfinity/identity';
-var Buffer = require('buffer/').Buffer;
+import { Buffer } from 'buffer';
 window.Buffer = Buffer;
 const domainSeparator = Buffer.from(new TextEncoder().encode('\x0Aic-request'));
 var _stoicOrigin = 'https://www.stoicwallet.com';
