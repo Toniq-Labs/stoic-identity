@@ -48,7 +48,13 @@ export class StoicIdentity extends SignIdentity {
       if (result === false) {
         resolve(false);
       } else {
-        resolve(new StoicIdentity(Principal.fromText(result.principal), new PublicKey(hex2buf(result.key), result.type)));
+        var id = new StoicIdentity(Principal.fromText(result.principal), new PublicKey(result.key, result.type));
+        id.accounts().then(r => {
+          resolve(id);          
+        }).catch(e => {
+          console.log(e);
+          resolve(false);
+        });
       };
     });
   };
