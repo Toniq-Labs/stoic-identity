@@ -90,7 +90,7 @@ export class StoicIdentity extends SignIdentity {
           response.body.sender_pubkey = DIC.publicKey;
           response.body.sender_delegation = DIC.delegations;
         } else {
-          response.body.sender_pubkey = pubkey.toDer();
+          response.body.sender_pubkey = new Uint8Array(Object.values(pubkey.toDer()));
         }
         resolve(response);
       } catch (e) {
