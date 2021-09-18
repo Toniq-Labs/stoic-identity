@@ -12,9 +12,9 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@dfinity/agent": "^0.9.1",
-    "@dfinity/identity": "^0.9.1",
-    "@dfinity/principal": "^0.9.1",
+    "@dfinity/agent": "^0.10.0",
+    "@dfinity/identity": "^0.10.0",
+    "@dfinity/principal": "^0.10.0",
     "buffer": "^6.0.3"
   },
   "devDependencies": {
