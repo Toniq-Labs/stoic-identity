@@ -5,12 +5,12 @@
     "license": "MIT",
     "author": "",
     "main": "dist/ic-stoic-identity.js",
-    "module": "src/index.js",
+    "module": "js-output/index.js",
+    "types": "js-output/index.d.ts",
     "scripts": {
-        "build": "webpack --mode production",
-        "dev": "webpack --mode development",
-        "format": "virmator format",
-        "test": "echo \"Error: no test specified\" && exit 1"
+        "build": "tsc && webpack --mode production && echo \"/*! For license information please see ic-stoic-identity.js.LICENSE.txt */\\n$(cat dist/ic-stoic-identity.js)\" > dist/ic-stoic-identity.js",
+        "dev": "tsc && webpack --mode development",
+        "format": "virmator format"
     },
     "dependencies": {
         "@dfinity/agent": "^0.10.0",
@@ -20,6 +20,7 @@
     },
     "devDependencies": {
         "terser-webpack-plugin": "^5.1.4",
+        "typescript": "^4.4.4",
         "virmator": "^1.3.7",
         "webpack": "^5.45.1",
         "webpack-cli": "^4.7.2",

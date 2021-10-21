@@ -1,0 +1,9 @@
+.prettierignore
+.prettierrc.js
+.vscode/
+demos/
+node_modules/
+package-lock.json
+src/
+tsconfig.json
+webpack.config.js
