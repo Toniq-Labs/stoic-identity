@@ -1,9 +1,26 @@
 {
     "name": "ic-stoic-identity",
     "version": "1.5.0",
-    "description": "",
+    "description": "Identity for DFINITY's IC HttpAgent (to connect to a Stoic wallet via Stoic Connect)",
+    "keywords": [
+        "dfinity",
+        "internet computer",
+        "ic",
+        "stoic",
+        "stoic wallet",
+        "stoic connect",
+        "stoic identity",
+        "toniq labs"
+    ],
+    "homepage": "https://github.com/Toniq-Labs/stoic-identity",
+    "bugs": {
+        "url": "https://github.com/Toniq-Labs/stoic-identity/issues"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Toniq-Labs/stoic-identity"
+    },
     "license": "MIT",
-    "author": "",
     "main": "dist/ic-stoic-identity.js",
     "module": "js-output/index.js",
     "types": "js-output/index.d.ts",
