@@ -83,7 +83,7 @@ export class StoicIdentity extends SignIdentity {
             content: body,
           }
         };
-        const result = JSON.parse(await this.sign(Buffer.from(Buffer.concat([domainSeparator, new Uint8Array(requestId)]))));
+        const result = JSON.parse(await this.sign(Buffer.from(Buffer.concat([domainSeparator, Buffer.from(new Uint8Array(requestId))]))));
         response.body.sender_sig = hex2buf(result.signed);
         if (pubkey.getType() == "DelegationIdentity") {
           var DIC = DelegationChain.fromJSON(result.chain);
