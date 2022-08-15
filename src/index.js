@@ -36,7 +36,9 @@ export class StoicIdentity extends SignIdentity {
       if (host) _stoicOrigin = host;
       _stoicLogin(_stoicOrigin).then(data => {
         resolve(new StoicIdentity(Principal.fromText(data.principal), new PublicKey(data.key, data.type)));
-      }).catch(reject);
+      }).catch(e =>  {
+        reject(e);
+      })
     });
   };
   
@@ -51,8 +53,7 @@ export class StoicIdentity extends SignIdentity {
         id.accounts().then(r => {
           resolve(id);          
         }).catch(e => {
-          console.log(e);
-          resolve(false);
+          reject(e);
         });
       };
     });
