@@ -7,6 +7,7 @@ import { Buffer } from 'buffer';
 window.Buffer = Buffer;
 const domainSeparator = Buffer.from(new TextEncoder().encode('\x0Aic-request'));
 var _stoicOrigin = 'https://www.stoicwallet.com';
+var _stoicTransportMethod = 'iframe'; // New global variable for transport method
 
 // Identity
 class PublicKey {
@@ -32,10 +33,10 @@ export class StoicIdentity extends SignIdentity {
     return _stoicLogout();
   }
 
-  static connect(host, transportMethod = "iframe") {
+  static connect(host) {
     return new Promise(async (resolve, reject) => {
       if (host) _stoicOrigin = host;
-      _stoicLogin(_stoicOrigin, transportMethod)
+      _stoicLogin(_stoicOrigin)
         .then((data) => {
           resolve(
             new StoicIdentity(
@@ -48,7 +49,7 @@ export class StoicIdentity extends SignIdentity {
     });
   }
 
-  static load(host, transportMethod = "iframe") {
+  static load(host) {
     return new Promise(async (resolve, reject) => {
       if (host) _stoicOrigin = host;
       var result = _stoicInit();
@@ -59,7 +60,7 @@ export class StoicIdentity extends SignIdentity {
           Principal.fromText(result.principal),
           new PublicKey(result.key, result.type)
         );
-        id.accounts(transportMethod)
+        id.accounts()
           .then((r) => {
             resolve(id);
           })
@@ -75,16 +76,16 @@ export class StoicIdentity extends SignIdentity {
     return this._publicKey;
   }
 
-  sign(data, transportMethod = "iframe") {
-    return this._transport(buf2hex(data), transportMethod);
+  sign(data) {
+    return this._transport(buf2hex(data));
   }
 
-  _transport(data, transportMethod) {
-    return _stoicSign("sign", data, this.getPrincipal().toText(), transportMethod);
+  _transport(data) {
+    return _stoicSign("sign", data, this.getPrincipal().toText());
   }
 
-  accounts(transportMethod = "iframe") {
-    return _stoicSign("accounts", "accounts", this.getPrincipal().toText(), transportMethod);
+  accounts() {
+    return _stoicSign("accounts", "accounts", this.getPrincipal().toText());
   }
 
   transformRequest(request) {
@@ -138,11 +139,11 @@ const _stoicLogout = () => {
   _stoicApp = null;
 };
 
-const _stoicLogin = (host, transportMethod = "iframe") => {
+const _stoicLogin = (host) => {
   return new Promise(async (resolve, reject) => {
     var app = await _generateKey();
     _stoicApiKey = app.apikey;
-    if (transportMethod === "popup") {
+    if (_stoicTransportMethod === "popup") {
       _stoicWindow = window.open(
         host + "?authorizeApp",
         "stoic",
@@ -165,7 +166,7 @@ const _stoicLogin = (host, transportMethod = "iframe") => {
   });
 };
 
-const _stoicSign = (action, payload, principal, transportMethod = "iframe") => {
+const _stoicSign = (action, payload, principal) => {
   return new Promise(async function (resolve, reject) {
     // Prepare the data to be sent
     var enc = new TextEncoder();
@@ -198,8 +199,7 @@ const _stoicSign = (action, payload, principal, transportMethod = "iframe") => {
       sig: sig, // Include the signature in the data
     };
 
-    // Choose the transport method
-    if (transportMethod === "popup") {
+    if (_stoicTransportMethod === "popup") {
       _postToPopup(data, resolve, reject);
     } else {
       _postToFrame(data, resolve, reject);
@@ -239,7 +239,7 @@ function _removeFrame(id) {
   } else if (_frames[id].type === "popup") {
     _frames[id].frame.close();
   }
-  //delete _frames[id];
+  delete _frames[id];
 }
 
 function _postToPopup(data, resolve, reject) {
@@ -314,7 +314,7 @@ window.addEventListener(
           reject(e.data.data);
         }
         _removeFrame(e.data.listener);
-        //delete _listener[e.data.listener];
+        delete _listener[e.data.listener];
       } else if (e.data.action == "initiateStoicConnect") {
         _stoicWindow.postMessage(
           { action: "requestAuthorization", apikey: _stoicApiKey },
