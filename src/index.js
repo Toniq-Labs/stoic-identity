@@ -155,7 +155,7 @@ const _stoicLogin = (host) => {
     _stoicWindowCB = [
       (r) => {
         app.principal = r.principal;
-        app.key = r.key;
+        app.key = Buffer.isBuffer(r.key) ? [...new Uint8Array(r.key)] : r.key;
         app.type = r.type;
         _stoicApp = app;
         localStorage.setItem("_scApp", JSON.stringify(app));
