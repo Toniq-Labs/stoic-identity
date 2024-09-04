@@ -7,7 +7,6 @@ import { Buffer } from 'buffer';
 window.Buffer = Buffer;
 const domainSeparator = Buffer.from(new TextEncoder().encode('\x0Aic-request'));
 var _stoicOrigin = 'https://www.stoicwallet.com';
-var _stoicTransportMethod = 'iframe'; // New global variable for transport method
 
 // Identity
 class PublicKey {
@@ -23,8 +22,11 @@ class PublicKey {
   }
 }
 export class StoicIdentity extends SignIdentity {
-  constructor(principal, pubkey) {
+  
+  constructor(principal, pubkey, transportMethod) {
     super();
+    this._transportMethod = 'popup';
+    if (transportMethod) this._transportMethod = transportMethod;
     this._principal = principal;
     this._publicKey = pubkey;
   }
@@ -33,39 +35,42 @@ export class StoicIdentity extends SignIdentity {
     return _stoicLogout();
   }
 
-  static connect(host) {
+  static connect(host, transportMethod) {
+    if (host) _stoicOrigin = host;
+    if (transportMethod) this._transportMethod = transportMethod;
     return new Promise(async (resolve, reject) => {
-      if (host) _stoicOrigin = host;
-      _stoicLogin(_stoicOrigin)
+      _stoicLogin(this._transportMethod)
         .then((data) => {
-          resolve(
-            new StoicIdentity(
-              Principal.fromText(data.principal),
-              new PublicKey(data.key, data.type)
-            )
+          let id = new StoicIdentity(
+            Principal.fromText(data.principal),
+            new PublicKey(data.key, data.type),
+            this._transportMethod
           );
+          resolve(id);
         })
         .catch(reject);
     });
   }
 
-  static load(host) {
+  static load(host, transportMethod) {
+    if (host) _stoicOrigin = host;
+    if (transportMethod) this._transportMethod = transportMethod;
     return new Promise(async (resolve, reject) => {
-      if (host) _stoicOrigin = host;
       var result = _stoicInit();
       if (result === false) {
         resolve(false);
       } else {
         var id = new StoicIdentity(
           Principal.fromText(result.principal),
-          new PublicKey(result.key, result.type)
+          new PublicKey(result.key, result.type),
+          this._transportMethod
         );
         id.accounts()
           .then((r) => {
             resolve(id);
           })
           .catch((e) => {
-            console.log(e);
+            console.log("Couldn't load accounts", e);
             resolve(false);
           });
       }
@@ -81,11 +86,11 @@ export class StoicIdentity extends SignIdentity {
   }
 
   _transport(data) {
-    return _stoicSign("sign", data, this.getPrincipal().toText());
+    return _stoicSign("sign", data, this.getPrincipal().toText(), this._transportMethod);
   }
 
   accounts() {
-    return _stoicSign("accounts", "accounts", this.getPrincipal().toText());
+    return _stoicSign("accounts", "accounts", this.getPrincipal().toText(), this._transportMethod);
   }
 
   transformRequest(request) {
@@ -128,7 +133,7 @@ var _stoicWindow,
   _stoicApp,
   _listenerIndex = 0,
   _listener = {},
-  _frames = {};
+  _openConnections = {};
 const _stoicInit = () => {
   _stoicApp = JSON.parse(localStorage.getItem("_scApp"));
   return _stoicApp ? _stoicApp : false;
@@ -139,19 +144,11 @@ const _stoicLogout = () => {
   _stoicApp = null;
 };
 
-const _stoicLogin = (host) => {
+const _stoicLogin = (transport) => {
   return new Promise(async (resolve, reject) => {
     var app = await _generateKey();
     _stoicApiKey = app.apikey;
-    if (_stoicTransportMethod === "popup") {
-      _stoicWindow = window.open(
-        host + "?authorizeApp",
-        "stoic",
-        "width=500,height=600"
-      );
-    } else {
-      _stoicWindow = window.open(host + "?authorizeApp", "stoic");
-    }
+    _stoicWindow = window.open(_stoicOrigin + "?authorizeApp", "stoic");
     _stoicWindowCB = [
       (r) => {
         app.principal = r.principal;
@@ -166,7 +163,7 @@ const _stoicLogin = (host) => {
   });
 };
 
-const _stoicSign = (action, payload, principal) => {
+const _stoicSign = (action, payload, principal, transport) => {
   return new Promise(async function (resolve, reject) {
     // Prepare the data to be sent
     var enc = new TextEncoder();
@@ -198,10 +195,11 @@ const _stoicSign = (action, payload, principal) => {
       apikey: _stoicApp.apikey,
       sig: sig, // Include the signature in the data
     };
-
-    if (_stoicTransportMethod === "popup") {
+    if (transport === "popup") {
+      data.target = "STOIC-POPUP";
       _postToPopup(data, resolve, reject);
     } else {
+      data.target = "STOIC-IFRAME";
       _postToFrame(data, resolve, reject);
     }
   });
@@ -234,12 +232,12 @@ function _generateKey() {
 }
 
 function _removeFrame(id) {
-  if (_frames[id].type === "iframe") {
-    _frames[id].frame.parentNode.removeChild(_frames[id].frame);
-  } else if (_frames[id].type === "popup") {
-    _frames[id].frame.close();
+  if (_openConnections[id].type === "iframe") {
+    _openConnections[id].target.parentNode.removeChild(_openConnections[id].target);
+  } else if (_openConnections[id].type === "popup") {
+    _openConnections[id].target.close();
   }
-  delete _frames[id];
+  delete _openConnections[id];
 }
 
 function _postToPopup(data, resolve, reject) {
@@ -247,18 +245,18 @@ function _postToPopup(data, resolve, reject) {
   _listenerIndex += 1;
   _listener[thisIndex] = [resolve, reject];
   const popup = window.open(
-    `${_stoicOrigin}/?stoicTunnel`,
-    "stoic",
+    `${_stoicOrigin}/?stoicTunnel&transport=popup&lid=`+thisIndex,
+    "stoic_"+thisIndex,
     "width=500,height=600"
   );
   if (!popup) {
     return reject("Failed to open popup window. It may have been blocked by the browser.");
   }
-  _frames[thisIndex] = { frame: popup, type: "popup" };
-  popup.onload = () => {
-    data.listener = thisIndex;
-    popup.postMessage(data, _stoicOrigin);
-  };
+  setTimeout(() => {
+      window.focus();
+  }, 100);
+  data.listener = thisIndex;
+  _openConnections[thisIndex] = { target: popup, type: "popup", data : data };
 }
 
 function _postToFrame(data, resolve, reject) {
@@ -271,10 +269,10 @@ function _postToFrame(data, resolve, reject) {
   ii.setAttribute("height", "0");
   ii.setAttribute("border", "0");
   document.body.appendChild(ii);
-  _frames[thisIndex] = { frame: ii, type: "iframe" };
+  data.listener = thisIndex;
+  _openConnections[thisIndex] = { target: ii, type: "iframe", data: data };
   ii.addEventListener("load", function () {
-    data.listener = thisIndex;
-    _frames[thisIndex].frame.contentWindow.postMessage(data, "*");
+    _openConnections[thisIndex].target.contentWindow.postMessage(data, "*");
   });
   ii.setAttribute("src", _stoicOrigin + "/?stoicTunnel");
 }
@@ -306,28 +304,33 @@ window.addEventListener(
   "message",
   function (e) {
     if (e.origin == _stoicOrigin) {
-      if (e && e.data && e.data.action === "STOIC-EXT") {
-        const [resolve, reject] = _listener[e.data.listener] || [];
-        if (typeof e.data.success !== "undefined" && e.data.success) {
-          resolve(e.data.data);
-        } else {
-          reject(e.data.data);
+      if (e && e.data) {
+        if (e.data.target  === "STOIC-EXT") {
+          const [resolve, reject] = _listener[e.data.listener] || [];
+          if (typeof e.data.success !== "undefined" && e.data.success) {
+            resolve(e.data.data);
+          } else {
+            reject(e.data.data);
+          }
+          _removeFrame(e.data.listener);
+          delete _listener[e.data.listener];
+        } else if (e.data.action === "stoicPopupLoad") {
+          let connection = _openConnections[e.data.listener];
+          connection.target.postMessage(connection.data, "*");
+        } else  if (e.data.action == "initiateStoicConnect") {
+          _stoicWindow.postMessage(
+            { action: "requestAuthorization", apikey: _stoicApiKey },
+            "*"
+          );
+        } else if (e.data.action == "rejectAuthorization") {
+          _stoicWindowCB[1]("Authorization Rejected");
+          _stoicWindowCB = null;
+          _stoicWindow.close();
+        } else if (e.data.action == "confirmAuthorization") {
+          _stoicWindowCB[0](e.data);
+          _stoicWindowCB = null;
+          _stoicWindow.close();
         }
-        _removeFrame(e.data.listener);
-        delete _listener[e.data.listener];
-      } else if (e.data.action == "initiateStoicConnect") {
-        _stoicWindow.postMessage(
-          { action: "requestAuthorization", apikey: _stoicApiKey },
-          "*"
-        );
-      } else if (e.data.action == "rejectAuthorization") {
-        _stoicWindowCB[1]("Authorization Rejected");
-        _stoicWindowCB = null;
-        _stoicWindow.close();
-      } else if (e.data.action == "confirmAuthorization") {
-        _stoicWindowCB[0](e.data);
-        _stoicWindowCB = null;
-        _stoicWindow.close();
       }
     }
     return;
