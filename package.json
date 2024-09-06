@@ -1,6 +1,6 @@
 {
   "name": "ic-stoic-identity",
-  "version": "4.0.0",
+  "version": "5.0.0",
   "description": "",
   "main": "dist/ic-stoic-identity.js",
   "module": "src/index.js",

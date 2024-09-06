@@ -7,7 +7,9 @@ import { Buffer } from 'buffer';
 window.Buffer = Buffer;
 const domainSeparator = Buffer.from(new TextEncoder().encode('\x0Aic-request'));
 var _stoicOrigin = 'https://www.stoicwallet.com';
-
+var _stoicTransportMethod = 'popup'; // New global variable for transport method
+let _stoicOpenConnection = false;
+let _stoicTimer = false;
 // Identity
 class PublicKey {
   constructor(der, type) {
@@ -26,6 +28,7 @@ export class StoicIdentity extends SignIdentity {
   constructor(principal, pubkey, transportMethod) {
     super();
     this._transportMethod = 'popup';
+    this._accounts = [];
     if (transportMethod) this._transportMethod = transportMethod;
     this._principal = principal;
     this._publicKey = pubkey;
@@ -65,14 +68,7 @@ export class StoicIdentity extends SignIdentity {
           new PublicKey(result.key, result.type),
           this._transportMethod
         );
-        id.accounts()
-          .then((r) => {
-            resolve(id);
-          })
-          .catch((e) => {
-            console.log("Couldn't load accounts", e);
-            resolve(false);
-          });
+        resolve(id);
       }
     });
   }
@@ -89,8 +85,17 @@ export class StoicIdentity extends SignIdentity {
     return _stoicSign("sign", data, this.getPrincipal().toText(), this._transportMethod);
   }
 
-  accounts() {
-    return _stoicSign("accounts", "accounts", this.getPrincipal().toText(), this._transportMethod);
+  accounts(force) {
+    return new Promise(async (resolve, reject) => {
+      if (!this._accounts.length || force) {
+        _stoicSign("accounts", "accounts", this.getPrincipal().toText(), this._transportMethod).then(accounts => {
+          this._accounts = accounts;
+          resolve(this._accounts);
+        }).catch(reject);
+      } else {
+        resolve(this._accounts);
+      }
+    });
   }
 
   transformRequest(request) {
@@ -106,8 +111,13 @@ export class StoicIdentity extends SignIdentity {
           },
         };
         const result = JSON.parse(
-          await this.sign(
-            Buffer.from(Buffer.concat([domainSeparator, new Uint8Array(requestId)]))
+          await _stoicSign(
+            "sign", 
+            buf2hex(Buffer.from(Buffer.concat([domainSeparator, new Uint8Array(requestId)]))), 
+            this.getPrincipal().toText(), 
+            this._transportMethod, 
+            request.endpoint,
+            buf2hex(requestId)
           )
         );
         response.body.sender_sig = hex2buf(result.signed);
@@ -163,7 +173,7 @@ const _stoicLogin = (transport) => {
   });
 };
 
-const _stoicSign = (action, payload, principal, transport) => {
+const _stoicSign = (action, payload, principal, transport, endpoint = "unknown", requestId = 0) => {
   return new Promise(async function (resolve, reject) {
     // Prepare the data to be sent
     var enc = new TextEncoder();
@@ -193,6 +203,8 @@ const _stoicSign = (action, payload, principal, transport) => {
       payload: payload,
       principal: principal,
       apikey: _stoicApp.apikey,
+      endpoint: endpoint,
+      requestId: requestId,
       sig: sig, // Include the signature in the data
     };
     if (transport === "popup") {
@@ -238,25 +250,50 @@ function _removeFrame(id) {
     _openConnections[id].target.close();
   }
   delete _openConnections[id];
+  delete _listener[id];
 }
 
 function _postToPopup(data, resolve, reject) {
-  var thisIndex = _listenerIndex;
-  _listenerIndex += 1;
-  _listener[thisIndex] = [resolve, reject];
-  const popup = window.open(
-    `${_stoicOrigin}/?stoicTunnel&transport=popup&lid=`+thisIndex,
-    "stoic_"+thisIndex,
-    "width=500,height=600"
-  );
-  if (!popup) {
-    return reject("Failed to open popup window. It may have been blocked by the browser.");
+  var thisIndex, existing = false;
+  if (_stoicOpenConnection){
+    thisIndex = _stoicOpenConnection;
+    existing = true;
+    if (_stoicTimer) {
+      clearTimeout(_stoicTimer);
+      _stoicTimer = false;
+    }
+    if (data.endpoint == 'call') {
+      //Keep it open?
+    } else {
+      _stoicTimer = setTimeout(() => {
+        _removeFrame(thisIndex);
+      }, 5000);
+    }
   }
-  setTimeout(() => {
-      window.focus();
-  }, 100);
+  if (!thisIndex) {
+    thisIndex = _listenerIndex;
+    _listenerIndex += 1;    
+  };
+  if (data.endpoint == 'call') {
+    _stoicOpenConnection = thisIndex;
+    _stoicTimer = false;
+  }
+  _listener[thisIndex] = [resolve, reject];
   data.listener = thisIndex;
-  _openConnections[thisIndex] = { target: popup, type: "popup", data : data };
+  data.existing = existing;
+  if (!existing){
+    const popup = window.open(
+      `${_stoicOrigin}/?stoicTunnel&transport=popup&lid=`+thisIndex,
+      "stoic_"+thisIndex,
+      "width=500,height=250,left=100,top=300,toolbar=no,menubar=no,scrollbars=no,resizable=no,status=no"
+    );
+    if (!popup) {
+      return reject("Failed to open popup window. It may have been blocked by the browser.");
+    }
+    _openConnections[thisIndex] = { target: popup, type: "popup", data : data };
+  } else {
+    _openConnections[thisIndex].target.postMessage(data, "*");
+  };
 }
 
 function _postToFrame(data, resolve, reject) {
@@ -308,12 +345,19 @@ window.addEventListener(
         if (e.data.target  === "STOIC-EXT") {
           const [resolve, reject] = _listener[e.data.listener] || [];
           if (typeof e.data.success !== "undefined" && e.data.success) {
+            if (e.data.message.endpoint == "call") {
+              //Don't close
+            } else if (e.data.message.endpoint == "read_state") {
+              if (!e.data.message.existing) {
+                _removeFrame(e.data.listener);
+              }
+            } else {
+              _removeFrame(e.data.listener);
+            };
             resolve(e.data.data);
           } else {
             reject(e.data.data);
           }
-          _removeFrame(e.data.listener);
-          delete _listener[e.data.listener];
         } else if (e.data.action === "stoicPopupLoad") {
           let connection = _openConnections[e.data.listener];
           connection.target.postMessage(connection.data, "*");
