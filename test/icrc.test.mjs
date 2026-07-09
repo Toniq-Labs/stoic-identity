@@ -95,7 +95,7 @@ function makeFakeSigner(env, { blobEncoding = "bytes", readyAfterPolls = 0, expi
             // may be raw/hex/base64; we pin our client to hex).
             assert.equal(typeof message.params.publicKey, "string");
             assert.match(message.params.publicKey, /^[0-9a-f]+$/);
-            const sessionDer = hexToBytes(message.params.publicKey).buffer;
+            const sessionDer = hexToBytes(message.params.publicKey);
             const expiration = expiresAt || new Date(Date.now() + 15 * 60 * 1000);
             const chain = await DelegationChain.create(
               rootKey,

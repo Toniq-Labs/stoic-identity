@@ -10,6 +10,6 @@
 - `src/index.js` — public exports only.
 
 ## Gotchas
-- Runtime deps are pinned old (`@dfinity/* ^0.10.0`) on purpose — consumers bundle their own agent versions; upgrading is a separate breaking change.
+- Runtime deps are `@dfinity/* ^3.4.3` — the last releases under the `@dfinity` scope. The line is deprecated in favor of `@icp-sdk/core` (same code, subpath imports, needs exports-map-aware bundlers); switching is a follow-up rename once consumers are ready.
 - `src/package.json` (`type: module`) exists so node can run the ESM sources in tests; don't delete it.
 - The signer sends blobs as structured-cloned `Uint8Array` and `expiration` as a base-10 string; `toBytes()` in `src/icrc.js` also tolerates hex/base64.

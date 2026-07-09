@@ -39,10 +39,9 @@ function toBytes(value, field) {
   throw new Error("Unable to decode bytes for " + field);
 }
 
-// Uint8Array views can sit inside a larger ArrayBuffer; @dfinity/identity
-// wants exact ArrayBuffers.
-function toExactBuffer(bytes) {
-  return bytes.slice().buffer;
+// Detach from any larger backing ArrayBuffer the view may sit inside.
+function copyBytes(bytes) {
+  return bytes.slice();
 }
 
 function bytesToHex(bytes) {
@@ -237,15 +236,15 @@ function chainFromIcrc34(result) {
   return DelegationChain.fromDelegations(
     result.signerDelegation.map((sd) => ({
       delegation: new Delegation(
-        toExactBuffer(toBytes(sd.delegation.pubkey, "delegation.pubkey")),
+        copyBytes(toBytes(sd.delegation.pubkey, "delegation.pubkey")),
         BigInt(sd.delegation.expiration),
         sd.delegation.targets
           ? sd.delegation.targets.map((t) => Principal.fromText(t))
           : undefined
       ),
-      signature: toExactBuffer(toBytes(sd.signature, "delegation.signature")),
+      signature: copyBytes(toBytes(sd.signature, "delegation.signature")),
     })),
-    toExactBuffer(toBytes(result.publicKey, "publicKey"))
+    copyBytes(toBytes(result.publicKey, "publicKey"))
   );
 }
 
