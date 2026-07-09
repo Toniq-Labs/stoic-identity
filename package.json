@@ -1,26 +1,27 @@
 {
   "name": "ic-stoic-identity",
-  "version": "6.0.0",
-  "description": "",
+  "version": "7.0.0",
+  "description": "Stoic wallet identity for the Internet Computer — connects over the ICRC signer standards (ICRC-25/27/29/34); legacy stoic-connect included for a deprecation window.",
   "main": "dist/ic-stoic-identity.js",
   "module": "src/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --test",
     "dev": "webpack --mode development",
     "build": "webpack --mode production"
   },
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@dfinity/agent": "^0.10.0",
-    "@dfinity/identity": "^0.10.0",
-    "@dfinity/principal": "^0.10.0",
-    "buffer": "^6.0.3"
+    "@dfinity/agent": "^3.4.3",
+    "@dfinity/identity": "^3.4.3",
+    "@dfinity/principal": "^3.4.3",
+    "buffer": "^6.0.3",
+    "js-sha256": "^0.11.1"
   },
   "devDependencies": {
-    "terser-webpack-plugin": "^5.1.4",
-    "webpack": "^5.45.1",
-    "webpack-cli": "^4.7.2",
+    "terser-webpack-plugin": "^5.6.1",
+    "webpack": "^5.108.4",
+    "webpack-cli": "^7.2.1",
     "webpack-node-externals": "^3.0.0"
   }
 }
